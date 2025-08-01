@@ -12,8 +12,6 @@ import (
 	"strings"
 )
 
-var OLLAMA_URL = os.Getenv("OLLAMA_URL")
-
 type APIRequest struct {
 	Prompt string `json:"prompt"`
 }
@@ -38,18 +36,24 @@ func Run() {
 func generateHandler(w http.ResponseWriter, r *http.Request) {
 	var req APIRequest
 
+	ollama_url := os.Getenv("OLLAMA_URL")
+	model := os.Getenv("MODEL")
+	if model == "" {
+		model = "llama2"
+	}
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
 
 	body, _ := json.Marshal(map[string]any{
-		"model":  "llama2",
+		"model":  model,
 		"prompt": req.Prompt,
 		"stream": true,
 	})
 
-	resp, err := http.Post(fmt.Sprintf("%s/api/generate", OLLAMA_URL), "application/json", bytes.NewBuffer(body))
+	resp, err := http.Post(fmt.Sprintf("%s/api/generate", ollama_url), "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		http.Error(w, "Failed to contact Ollama", http.StatusInternalServerError)
 		return

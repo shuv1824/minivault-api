@@ -13,6 +13,8 @@ services:
   minivault-api:
     build: .
     container_name: minivault-api
+    volumes:
+      - ./logs:/app/logs
     environment:
       - OLLAMA_URL=http://ollama:11434
       - MODE=API
@@ -25,6 +27,7 @@ services:
 
 volumes:
   ollama:
+  logs:
 
 networks:
   minivault:

@@ -29,10 +29,9 @@ restart: stop build run
 logs:
 	docker-compose logs -f
 
-# Build Go API binary and run without docker and
-# with locally installed ollama service
+# Build Go CLI binary and run when ollama is running in docker and
 run-cli: build-cli
-	@./bin/minivault
+	OLLAMA_URL=http://localhost:11434 MODE=CLI ./bin/minivault
 
 build-cli:
-	OLLAMA_URL=http://localhost:11434 MODE=CLI go build -o bin/minivault .
+	@go build -o bin/minivault .

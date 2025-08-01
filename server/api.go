@@ -9,7 +9,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"runtime"
 	"strings"
+	"time"
 )
 
 type APIRequest struct {
@@ -27,13 +29,29 @@ type OllamaResponse struct {
 	Done      bool   `json:"done"`
 }
 
-func Run() {
-	http.HandleFunc("/generate", generateHandler)
+type Status struct {
+	Uptime       string  `json:"uptime"`
+	MemoryUsedMB float64 `json:"memory_used_mb"`
+	NumGoroutine int     `json:"num_goroutine"`
+	NumCPU       int     `json:"num_cpu"`
+}
+
+func Run(startTime time.Time) {
+	http.HandleFunc("/generate", generateHandler)        // POST method
+	http.HandleFunc("/status", statusHandler(startTime)) // GET method
+
 	log.Println("Go API listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 func generateHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	timestamp := time.Now().Format("2006-01-02 15:04:05") // standard Go timestamp format
+
 	var req APIRequest
 
 	ollama_url := os.Getenv("OLLAMA_URL")
@@ -95,7 +113,39 @@ func generateHandler(w http.ResponseWriter, r *http.Request) {
 	resBody, _ := json.Marshal(APIResponse{
 		Response: fullResponse.String(),
 	})
+
+	logToFile(timestamp, req.Prompt, fullResponse.String())
+
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(resBody)
 
+}
+
+func statusHandler(startTime time.Time) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var memStats runtime.MemStats
+		runtime.ReadMemStats(&memStats)
+
+		status := Status{
+			Uptime:       time.Since(startTime).String(),
+			MemoryUsedMB: float64(memStats.Alloc) / 1024 / 1024,
+			NumGoroutine: runtime.NumGoroutine(),
+			NumCPU:       runtime.NumCPU(),
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(status)
+	}
+}
+
+func logToFile(timestamp, prompt, response string) {
+	f, err := os.OpenFile("logs/chat.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+
+	logEntry := fmt.Sprintf("[%s]\nPrompt: %s\nResponse: %s\n\n", timestamp, prompt, response)
+
+	f.WriteString(logEntry)
 }

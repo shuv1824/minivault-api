@@ -16,7 +16,6 @@ run-model:
 	docker-compose up -d ollama
 	@echo "Waiting for Ollama to be ready..."
 	@sleep 5
-	@echo "Pulling model: $(MODEL_NAME)"
 	docker exec ollama ollama run $(MODEL_NAME)
 
 # Stop all containers
@@ -32,8 +31,8 @@ logs:
 
 # Build Go API binary and run without docker and
 # with locally installed ollama service
-run-bin: build-bin
+run-cli: build-cli
 	@./bin/minivault
 
-build-bin:
-	OLLAMA_URL=http://localhost:11434 go build -o bin/minivault .
+build-cli:
+	OLLAMA_URL=http://localhost:11434 MODE=CLI go build -o bin/minivault .

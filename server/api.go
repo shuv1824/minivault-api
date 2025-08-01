@@ -49,7 +49,7 @@ func generateHandler(w http.ResponseWriter, r *http.Request) {
 		"stream": true,
 	})
 
-	resp, err := http.Post(fmt.Sprintf("http://%s/api/generate", OLLAMA_URL), "application/json", bytes.NewBuffer(body))
+	resp, err := http.Post(fmt.Sprintf("%s/api/generate", OLLAMA_URL), "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		http.Error(w, "Failed to contact Ollama", http.StatusInternalServerError)
 		return

@@ -36,6 +36,12 @@ type Status struct {
 	NumCPU       int     `json:"num_cpu"`
 }
 
+type LogEntry struct {
+	Timestamp string `json:"timestamp"`
+	Prompt    string `json:"prompt"`
+	Response  string `json:"response"`
+}
+
 func Run(startTime time.Time) {
 	http.HandleFunc("/generate", generateHandler)        // POST method
 	http.HandleFunc("/status", statusHandler(startTime)) // GET method
@@ -139,13 +145,24 @@ func statusHandler(startTime time.Time) http.HandlerFunc {
 }
 
 func logToFile(timestamp, prompt, response string) {
-	f, err := os.OpenFile("logs/chat.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	entry := LogEntry{
+		Timestamp: timestamp,
+		Prompt:    prompt,
+		Response:  response,
+	}
+
+	f, err := os.OpenFile("logs/log.jsonl", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return
 	}
 	defer f.Close()
 
-	logEntry := fmt.Sprintf("[%s]\nPrompt: %s\nResponse: %s\n\n", timestamp, prompt, response)
+	// Marshal the log entry to JSON
+	jsonData, err := json.Marshal(entry)
+	if err != nil {
+		return
+	}
 
-	f.WriteString(logEntry)
+	// Write JSON + newline to file
+	_, _ = f.Write(append(jsonData, '\n'))
 }

@@ -121,7 +121,7 @@ docker-compose logs -f
 - `OLLAMA_URL`: Ollama server URL (default: `http://localhost:11434`)
 - `MODEL`: Model name to use (default: `llama2`)
 
-## 📡 API Usage
+## API Usage
 
 ### Generate Response
 
@@ -206,7 +206,7 @@ minivault/
 └── README.md          # This file
 ```
 
-## 🔧 Development
+## Development
 
 ### Building
 
